@@ -174,44 +174,42 @@ func (conn *Connection) updateClusterInfo() error {
 	err = json.Unmarshal(responseBody,&sections)
 	if ( err != nil ) { return err }
 	sMap := sections["store"].(map[string]interface{})
-	leaderRaftAddr := sMap["leader"].(string)
-	trace("%s: leader from store section is %s",conn.ID,leaderRaftAddr)
+	// leaderRaftAddr := sMap["leader"].(string)
+	leaderMap := sMap["leader"].(map[string]interface{})
+	leaderRaftID := leaderMap["node_id"]
+	trace("%s: leader from store section is %s", conn.ID, leaderRaftID)
 
 	// leader in this case is the RAFT address
 	// we want the HTTP address, so we'll use this as
 	// a key as we sift through APIPeers
 
-	meta := sMap["meta"].(map[string]interface{})
-	apiPeers := meta["APIPeers"].(map[string]interface{})
-
-	for raftAddr, httpAddr := range apiPeers {
-		trace("%s: examining httpAddr %s",conn.ID,httpAddr)
-
-		/* httpAddr are usually hostname:port */
+	meta := sMap["metadata"].(map[string]interface{})
+	//apiPeers := meta["APIPeers"].(map[string]interface{})
+	for raftAddr, metadata := range meta {
+		nodeMetaData := metadata.(map[string]interface{})
+		httpAddr := nodeMetaData["api_addr"]
 		var p peer
-		parts := strings.Split(httpAddr.(string),":")
+		parts := strings.Split(httpAddr.(string), ":")
 		p.hostname = parts[0]
 		p.port = parts[1]
-
-		// so is this the leader?
-		if ( leaderRaftAddr == raftAddr ) {
-			trace ("%s: found leader at %s",conn.ID,httpAddr)
+		if raftAddr == leaderRaftID {
+			trace("%s: found leader at %s", conn.ID, httpAddr)
 			rc.leader = p
 		} else {
 			rc.otherPeers = append(rc.otherPeers, p)
 		}
 	}
 
-	if ( rc.leader.hostname == "" ) {
+	if rc.leader.hostname == "" {
 		return errors.New("could not determine leader from API status call")
 	}
 
 	// dump to trace
-	trace("%s: here is my cluster config:",conn.ID)
-	trace("%s: leader   : %s",conn.ID,rc.leader.String())
+	trace("%s: here is my cluster config:", conn.ID)
+	trace("%s: leader   : %s", conn.ID, rc.leader.String())
 	for n, v := range rc.otherPeers {
-		trace("%s: otherPeer #%d: %s",conn.ID,n,v.String())
-	}	
+		trace("%s: otherPeer #%d: %s", conn.ID, n, v.String())
+	}
 
 	// now make it official
 	conn.cluster = rc
