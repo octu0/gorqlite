@@ -143,9 +143,9 @@ func (conn *Connection) Write(sqlStatements []string) (results []WriteResult, er
 		if ok { 
 			thisWR.RowsAffected = int64(thisResult["rows_affected"].(float64))
 		}
-		thisWR.Timing = thisResult["time"].(float64)
+		// thisWR.Timing = thisResult["time"].(float64)
 
-		trace("%s: this result (LII,RA,T): %d %d %f",conn.ID,thisWR.LastInsertID,thisWR.RowsAffected,thisWR.Timing)
+		trace("%s: this result (LII,RA,T): %d %d ",conn.ID,thisWR.LastInsertID,thisWR.RowsAffected)
 		results = append(results,thisWR)
 	}
 
