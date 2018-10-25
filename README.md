@@ -61,9 +61,12 @@ conn.SetConsistencyLevel("strong")
 // timeout applies to the http.Client and its work.  It is measured in seconds.
 conn.SetTimeout(10)
 
+// major info
+// you must create table before use insert or select statements
+
 // simulate database/sql Prepare()
 statements := make ([]string,0)
-pattern := "INSERT INTO secret_agents(id, hero_name, abbrev) VALES (%d, '%s', '%3s')"
+pattern := "INSERT INTO secret_agents(id, hero_name, abbrev) VALUES (%d, '%s', '%3s')"
 statements = append(statements,fmt.Sprintf(pattern,125718,"Speed Gibson","Speed"))
 statements = append(statements,fmt.Sprintf(pattern,209166,"Clint Barlow","Clint"))
 statements = append(statements,fmt.Sprintf(pattern,44107,"Barney Dunlap","Barney"))
@@ -71,7 +74,7 @@ results, err := conn.Write(statements)
 
 // now we have an array of []WriteResult 
 
-for n, v := range WriteResult {
+for n, v := range results {
 	fmt.Printf("for result %d, %d rows were affected\n",n,v.RowsAffected)
 	if ( v.Err != nil ) {
 		fmt.Printf("   we have this error: %s\n",v.Err.Error())
@@ -93,9 +96,9 @@ var name string
 rows, err := conn.QueryOne("select id, name from secret_agents where id > 500")
 fmt.Printf("query returned %d rows\n",rows.NumRows)
 for rows.Next() {
-	err := response.Scan(&id, &name)
-	fmt.Printf("this is row number %d\n",response.RowNumber)
-	fmt.Printf("there are %d rows overall%d\n",response.NumRows)
+	err := rows.Scan(&id, &name)
+	fmt.Printf("this is row number %d\n",rows.RowNumber())
+	fmt.Printf("there are %d rows overall%d\n",rows.NumRows())
 }
 
 // just like WriteOne()/Write(), QueryOne() takes a single statement,
@@ -106,7 +109,7 @@ for rows.Next() {
 // alternatively, use Next()/Map()
 
 for rows.Next() {
-	m, err := response.Map()
+	m, err := rows.Map()
 	// m is now a map[column name as string]interface{}
 	id := m["name"].(float64) // the only json number type
 	name := m["name"].(string)
