@@ -91,7 +91,8 @@ QueryOne() is a convenience method that wraps Query() into a single-statement
 method.
 */
 func (conn *Connection) QueryOne(sqlStatement string) (qr QueryResult, err error) {
-  if ( conn.hasBeenClosed) {
+	fmt.Println("QueryOne:", sqlStatement)
+	if ( conn.hasBeenClosed) {
 		qr.Err = errClosed
 		return qr, errClosed
   }
@@ -167,7 +168,7 @@ func (conn *Connection) Query(sqlStatements []string) (results []QueryResult, er
 		}
 
 		// time is a float64
-		thisQR.Timing = thisResult["time"].(float64)
+		// thisQR.Timing = thisResult["time"].(float64)
 
 		// column & type are an array of strings
 		c := thisResult["columns"].([]interface{})

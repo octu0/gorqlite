@@ -131,7 +131,7 @@ func (conn *Connection) assembleURL(apiOp apiOperation, p peer) string {
 	}
 
 	if ( apiOp == api_QUERY || apiOp == api_WRITE ) {
-		stringBuffer.WriteString("?timings&transaction&level=")
+		stringBuffer.WriteString("?pretty&timings&level=")
 		stringBuffer.WriteString(consistencyLevelNames[conn.consistencyLevel])
 	}
 
