@@ -89,8 +89,8 @@ The URL should be in a form like this:
   https://mary:secret2@somewhere.example.com:1234
   https://mary:secret2@somewhere.example.com // will use 4001
  * *****************************************************************/
-func Open(connURL string) (Connection, error) {
-	var conn Connection
+func Open(connURL string) (*Connection, error) {
+	conn := new(Connection)
 
 	// generate our uuid for trace
 	b := make([]byte, 16)
