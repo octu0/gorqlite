@@ -171,34 +171,31 @@ func (conn *Connection) updateClusterInfo() error {
 	trace("%s: updateClusterInfo() back from api call OK",conn.ID)
 	
 	sections := make(map[string]interface{})
-	err = json.Unmarshal(responseBody,&sections)
+	err = json.Unmarshal(responseBody, &sections)
 	if ( err != nil ) { return err }
 	sMap := sections["store"].(map[string]interface{})
-	// leaderRaftAddr := sMap["leader"].(string)
-	leaderMap := sMap["leader"].(map[string]interface{})
-	leaderRaftID := leaderMap["node_id"]
-	trace("%s: leader from store section is %s", conn.ID, leaderRaftID)
+  leader := sMap["leader"].(string)
+	trace("%s: leader from store section is %s", conn.ID, leader)
 
 	// leader in this case is the RAFT address
 	// we want the HTTP address, so we'll use this as
 	// a key as we sift through APIPeers
 
-	meta := sMap["metadata"].(map[string]interface{})
-	//apiPeers := meta["APIPeers"].(map[string]interface{})
-	for raftAddr, metadata := range meta {
-		nodeMetaData := metadata.(map[string]interface{})
-		httpAddr := nodeMetaData["api_addr"]
-		var p peer
-		parts := strings.Split(httpAddr.(string), ":")
-		p.hostname = parts[0]
-		p.port = parts[1]
-		if raftAddr == leaderRaftID {
-			trace("%s: found leader at %s", conn.ID, httpAddr)
-			rc.leader = p
-		} else {
-			rc.otherPeers = append(rc.otherPeers, p)
-		}
-	}
+	meta := sMap["meta"].(map[string]interface{})
+	apiPeers := meta["APIPeers"].(map[string]interface{})
+	for key, addr := range apiPeers {
+    parts    := strings.Split(addr.(string), ":")
+    p := peer{
+      hostname: parts[0],
+      port:     parts[1],
+    }
+    if key == leader {
+      trace("%s: found leader at %s:%s", conn.ID, p.hostname, p.port)
+      rc.leader = p
+    } else {
+      rc.otherPeers = append(rc.otherPeers, p)
+    }
+  }
 
 	if rc.leader.hostname == "" {
 		return errors.New("could not determine leader from API status call")
